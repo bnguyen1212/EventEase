@@ -1,0 +1,77 @@
+@page "/events"
+@using EventEase.Models
+@using EventEase.Services
+@inject EventService EventService
+
+<h2>Event List</h2>
+
+<EditForm Model="@newEvent" OnValidSubmit="@AddEvent">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label>Event Name:</label>
+        <InputText @bind-Value="newEvent.Name" />
+    </div>
+    <div class="form-group">
+        <label>Date:</label>
+        <InputDate @bind-Value="newEvent.Date" />
+    </div>
+    <div class="form-group">
+        <label>Location:</label>
+        <InputText @bind-Value="newEvent.Location" />
+    </div>
+
+    <button type="submit">Add Event</button>
+</EditForm>
+
+<hr />
+
+@if (events.Count == 0)
+{
+    <p>No events added yet.</p>
+}
+else
+{
+    <div class="event-list">
+        @foreach (var evt in events)
+        {
+            <EventCard Event="evt" />
+        }
+    </div>
+}
+
+@code {
+    private List<EventModel> events = new();
+    private EventModel newEvent = new EventModel { Date = DateTime.Today };
+
+    protected override void OnInitialized()
+    {
+        // Initialize with today's date
+        newEvent = new EventModel { Date = DateTime.Today };
+        
+        // Get events from service
+        events = EventService.GetEvents();
+    }
+
+    private void AddEvent()
+    {
+        // Clone the event and assign ID
+        var eventToAdd = new EventModel
+        {
+            Id = EventService.GetNextId(),
+            Name = newEvent.Name,
+            Date = newEvent.Date,
+            Location = newEvent.Location
+        };
+        
+        // Add to service
+        EventService.AddEvent(eventToAdd);
+        
+        // Update local list (should reflect the service data)
+        events = EventService.GetEvents();
+
+        // Reset form but keep today's date
+        newEvent = new EventModel { Date = DateTime.Today };
+    }
+}

@@ -1,0 +1,67 @@
+@using EventEase.Models
+@using EventEase.Services
+@inject NavigationManager NavigationManager
+@inject UserStateService UserState
+
+<div class="event-card">
+    <h3>@Event.Name</h3>
+    <p>Date: @Event.Date.ToString("MMMM dd, yyyy")</p>
+    <p>Location: @Event.Location</p>
+    
+    <button @onclick="RegisterForEvent" class="register-button">Register</button>
+    @if (!string.IsNullOrEmpty(registrationMessage))
+    {
+        <p class="validation-message">@registrationMessage</p>
+    }
+    <button @onclick="MarkAttendance" class="attendance-button">Mark Attended</button>
+    @if (!string.IsNullOrEmpty(attendanceMessage))
+    {
+        <p>@attendanceMessage</p>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public EventModel Event { get; set; }
+
+    private string attendanceMessage;
+    private string registrationMessage;
+
+    private void RegisterForEvent()
+    {
+        registrationMessage = null;
+
+        if (UserState.RegisteredEvents.Any(r => r.EventId == Event.Id))
+        {
+            registrationMessage = "You are already registered for this event.";
+            return;
+        }
+        NavigationManager.NavigateTo($"/register/{Event.Id}");
+    }
+
+    private void MarkAttendance()
+    {
+        // Clear previous message
+        attendanceMessage = null;
+        
+        // Check all conditions in cascading else-if
+        if (!UserState.RegisteredEvents.Any(r => r.EventId == Event.Id))
+        {
+            attendanceMessage = "Error: You must register for this event before marking attendance.";
+        }
+        else if (UserState.RegisteredEvents.FirstOrDefault(r => r.EventId == Event.Id).HasAttended)
+        {
+            attendanceMessage = "Error: You have already marked attendance for this event.";
+        }
+        else if (Event.Date > DateTime.Today)
+        {
+            attendanceMessage = "Error: Cannot mark attendance for future events.";
+        }
+        else
+        {
+            // All conditions met, mark attendance
+            UserState.MarkAttendance(Event.Id);
+            attendanceMessage = "Success: Attendance marked successfully!";
+        }
+    }
+}

@@ -1,0 +1,83 @@
+@page "/register/{EventId:int}"
+@using EventEase.Models
+@using EventEase.Services
+@inject NavigationManager NavigationManager
+@inject UserStateService UserState
+
+<h2>Register for Event:</h2>
+
+@if (selectedEvent != null)
+{
+    <div class="event-info">
+        <h3>@selectedEvent.Name</h3>
+        <p>Date: @selectedEvent.Date.ToString("MMMM dd, yyyy")</p>
+        <p>Location: @selectedEvent.Location</p>
+    </div>
+    <EditForm Model="@registrationForm" OnValidSubmit="@HandleRegistration">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label>Full Name:</label>
+            <InputText @bind-Value="registrationForm.FullName" />
+        </div>
+
+        <div class="form-group">
+            <label>Email:</label>
+            <InputText @bind-Value="registrationForm.Email" />
+        </div>
+
+        <button type="submit">Register</button>
+    </EditForm>
+}
+else
+{
+    <p>Event not found. Please select a valid event.</p>
+    <button @onclick="NavigateToEvents">View Events</button>
+}
+
+@if (registrationSuccess)
+{
+    <div class="success-message">
+        <h3>Registration Successful!</h3>
+        <p>Thank you for registering for @selectedEvent?.Name.</p>
+        <button @onclick="NavigateToEvents">Back to Events</button>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int EventId { get; set; }
+
+    [Inject]
+    private EventService EventService { get; set; }
+
+    private EventModel selectedEvent;
+    private RegistrationFormModel registrationForm = new();
+    private bool registrationSuccess = false;
+
+    protected override void OnInitialized()
+    {
+        // Fetch the event using EventId
+        selectedEvent = EventService.GetEventById(EventId);
+        
+        // If event not found, selectedEvent will be null and the UI will show "Event not found"
+    }
+
+    private void HandleRegistration()
+    {
+        if (selectedEvent != null)
+        {
+            // Register the user for this event in our state service
+            UserState.RegisterForEvent(EventId, selectedEvent.Name);
+            
+            // In a real app, you would save registration to database
+            registrationSuccess = true;
+        }
+    }
+
+    private void NavigateToEvents()
+    {
+        NavigationManager.NavigateTo("/events");
+    }
+}
