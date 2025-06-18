@@ -5,6 +5,10 @@ on:
     branches: [main] # Set this to your default branch
   workflow_dispatch: # Allows manual triggering
 
+# Add permissions for the GITHUB_TOKEN
+permissions:
+  contents: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -39,3 +43,4 @@ jobs:
         with:
           folder: publish/wwwroot # The folder the action should deploy
           branch: gh-pages # The branch the action should deploy to
+          token: ${{ secrets.GITHUB_TOKEN }} # Add GitHub token
