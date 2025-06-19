@@ -10,10 +10,15 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 var baseAddress = builder.HostEnvironment.BaseAddress;
 Console.WriteLine($"Base Address: {baseAddress}");
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(baseAddress) });
-
 // Register the services
 builder.Services.AddSingleton<EventEase.Services.UserStateService>();
 builder.Services.AddSingleton<EventEase.Services.EventService>();
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+
+// Add this code for GitHub Pages routing
+builder.Services.AddSingleton(new HttpClient
+{
+    BaseAddress = new Uri(baseAddress)
+});
 
 await builder.Build().RunAsync();
